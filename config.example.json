@@ -1,0 +1,4 @@
+{
+    "fora_access_token": "<your JWT access key>",
+    "password": "<bot password>"
+}
