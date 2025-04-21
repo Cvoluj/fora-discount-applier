@@ -9,6 +9,7 @@ from formatter import format_coupon_html
 from fora.coupon import get_personal_info
 from fora.utils import read_config, save_to_json_file
 from utils import check_auth, load_user_data, save_user_data
+from fora.refresh_token import safe_refresh_token
 from fora.activate_coupons_pipeline import retrieve_not_active_coupons, activate_coupons
 load_dotenv()
 
@@ -119,11 +120,18 @@ async def activate_coupons_handler(message: types.Message):
         await message.answer("Please set your token first using the 'Set Token' button.")
         return
     
+    config = read_config()
+    refresh_info = await safe_refresh_token(config.get("fora_access_token"), config.get("fora_refresh_token"))
+    if refresh_info.get("is_access_expired"):
+        await message.answer("Tokens updated")
+    if refresh_info.get("is_refresh_expired"):
+        await message.answer(f"please look: {refresh_info.get('response')}")
     try:
         not_active_coupons = await retrieve_not_active_coupons()
         if not not_active_coupons:
             await message.answer("All coupons already activated")
         else:
+            await message.answer(f"Found {len(not_active_coupons)} to activate")
             await activate_coupons(not_active_coupons)
         
         personal_info = await get_personal_info()
